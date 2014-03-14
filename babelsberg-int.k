@@ -1,3 +1,4 @@
+require "./cassowary-gateway.k"
 require "./babelsberg.k"
 
 module BABELSBERG-INT-SYNTAX
@@ -24,7 +25,7 @@ endmodule
 
 module BABELSBERG-INT
   imports BABELSBERG-INT-SYNTAX
-  imports BABELSBERG
+  imports CASSOWARY-GATEWAY
 
   // tell K to stop evaluation when a Value is found
   syntax KResult            ::= Value
@@ -51,12 +52,12 @@ module BABELSBERG-INT
 
   // S-Asgn
   rule <k> X := V:Number => . ...</k>
-       <E> E => #getModel(C && X = V && #getStays(E), "./z3") </E>
+       <E> E => #getAssignments(C && X = V && #getStays(E)) </E>
        <C> C => C </C>
 
   // S-Always
   rule <k> always C0:Constraint => . ...</k>
-       <E> E => #getModel(C && C0 && #getStays(E), "./z3") </E>
+       <E> E => #getAssignments(C && C0 && #getStays(E)) </E>
        <C> C => C && C0 </C>
 
   // S-SeqStep
