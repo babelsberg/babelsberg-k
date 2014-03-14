@@ -8,23 +8,22 @@ module CASSOWARY-GATEWAY
 
   // getStays converts Map into stay constraints
   syntax Constraint ::= "#getStays" "(" Map ")" [function]
+  	 	      | "weak" Constraint
 
   // getAssignments expresses E ||= C
   // it gets stuck if no model is available
-  syntax Map ::= "#getAssignments" "(" Constraint ")" [function]
-               | "#writeAndPoll" "(" Constraint "," Int ")" [function]
+  syntax Map ::= "#getAssignments" "(" Constraint "," Int ")" [function]
 	       | "#poll" "(" Int "," K ")" [function]
 	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
 	       | "#closeAndConvert" "(" Int "," String ")" [function]
 	       | "#convert" "(" K "," Constraint ")" [function]
 	       | "#convertRest" "(" Map "," Constraint ")" [function]
 
-  rule #getAssignments(C) => #writeAndPoll(C, #open("./cassowary-gateway.exchange"))
-  rule #writeAndPoll(C, Fd) => #poll(Fd, #write(Fd, #printConstraints(C)))
+  rule #getAssignments(C, Fd:Int) => #poll(Fd, #write(Fd, #printConstraints(C)))
   rule #poll(Fd:Int, _) => #checkResultOfRead(Fd, #read(Fd, 10000)) // try to read all
   rule #checkResultOfRead(Fd:Int, ReadResult:String) => #closeAndConvert(Fd, ReadResult)
-  rule #checkResultOfRead(Fd:Int, _) => #poll(Fd, .) // eof-case
-  rule #closeAndConvert(Fd, ReadResult) => #convert(#close(Fd), #parse(ReadResult, "Constraint"))
+  rule #checkResultOfRead(Fd:Int, #EOF) => #poll(Fd, .) // eof-case
+  rule #closeAndConvert(Fd, ReadResult) => #convert(Fd, #parse(ReadResult, "Constraint"))
   rule #convert(_, Constraint) => #convertRest(.Map, Constraint)
   rule #convertRest(M, V = N && C) => #convertRest(M (V |-> N), C)
   rule #convertRest(M, V = N) => #convertRest(M (V |-> N), .)
@@ -35,13 +34,15 @@ module CASSOWARY-GATEWAY
   rule #printConstraints(.) => ""
   rule #printConstraints(Constraint1 && Constraint2)
        => #printConstraints(Constraint1) +String #printConstraints(Constraint2)
+  rule #printConstraints(weak Constraint1)
+       => "(weak " +String #printConstraints(Constraint1) +String ")\n"
   // AtomicConstraint
   rule #printConstraints(CExpression1 = CExpression2)
-       => "(= " +String #printCExp(CExpression1) +String #printCExp(CExpression2) +String ")\n"
+       => "(= " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")\n"
   rule #printConstraints(CExpression1 >= CExpression2)
-       => "(>= " +String #printCExp(CExpression1) +String #printCExp(CExpression2) +String ")\n"
+       => "(>= " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")\n"
   rule #printConstraints(CExpression1 <= CExpression2)
-       => "(<= " +String #printCExp(CExpression1) +String #printCExp(CExpression2) +String ")\n"
+       => "(<= " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")\n"
   // CExpressions
   rule #printCExp(CExpression1 / CExpression2)
        => "(/ " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")"
@@ -55,6 +56,6 @@ module CASSOWARY-GATEWAY
   rule #printCExp(F:Float) => Float2String(F)
   rule #printCExp(X:Id) => Id2String(X)
 
-  rule #getStays((X |-> V) Rest) => X = V && #getStays(Rest) [function]
+  rule #getStays((X |-> V) Rest) => (weak X = V) && #getStays(Rest) [function]
   rule #getStays(.) => .
 endmodule

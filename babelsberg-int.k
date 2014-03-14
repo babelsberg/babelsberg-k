@@ -35,6 +35,7 @@ module BABELSBERG-INT
     <k> $PGM:Statement </k> // the remaining program
     <E> .Map </E> // the environment
     <C> . </C> // the current constraint system
+    <Cassowary> #open("./cassowary-gateway.exchange"):Int </Cassowary>
   </T>
 
   // E-Var
@@ -52,13 +53,15 @@ module BABELSBERG-INT
 
   // S-Asgn
   rule <k> X := V:Number => . ...</k>
-       <E> E => #getAssignments(C && X = V && #getStays(E)) </E>
+       <E> E => #getAssignments(C && X = V && #getStays(E), Fd) </E>
        <C> C => C </C>
+       <Cassowary> Fd </Cassowary>
 
   // S-Always
   rule <k> always C0:Constraint => . ...</k>
-       <E> E => #getAssignments(C && C0 && #getStays(E)) </E>
+       <E> E => #getAssignments(C && C0 && #getStays(E), Fd) </E>
        <C> C => C && C0 </C>
+       <Cassowary> Fd </Cassowary>
 
   // S-SeqStep
   rule S1 ; S2 => S1 ~> S2 [structural]
