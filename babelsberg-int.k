@@ -51,6 +51,10 @@ module BABELSBERG-INT
   rule (F1:Float + F2:Float):Expression => F1 +Float F2
   rule (F1:Float - F2:Float):Expression => F1 -Float F2
 
+  // S-Unsat
+  // Hack... this should really be in the S-Asgn and S-Always rules
+  rule <k>_ => unsat</k> <E> (-1 |-> -2) => .Map </E>
+
   // S-Asgn
   rule <k> X := V:Number => . ...</k>
        <E> E => #getAssignments(C && X = V && #getStays(E), Fd) </E>

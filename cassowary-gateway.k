@@ -11,14 +11,12 @@ module CASSOWARY-GATEWAY
   	 	      | "weak" Constraint
 
   // getAssignments expresses E ||= C
-  // it gets stuck if no model is available
   syntax Map ::= "#getAssignments" "(" Constraint "," Int ")" [function]
 	       | "#poll" "(" Int "," K ")" [function]
 	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
 	       | "#closeAndConvert" "(" Int "," String ")" [function]
 	       | "#convert" "(" K "," Constraint ")" [function]
 	       | "#convertRest" "(" Map "," Constraint ")" [function]
-
   rule #getAssignments(C, Fd:Int) => #poll(Fd, #write(Fd, #printConstraints(C)))
   rule #poll(Fd:Int, _) => #checkResultOfRead(Fd, #read(Fd, 10000)) // try to read all
   rule #checkResultOfRead(Fd:Int, ReadResult:String) => #closeAndConvert(Fd, ReadResult)
