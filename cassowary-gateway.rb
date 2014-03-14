@@ -48,8 +48,6 @@ class SexpSolver
       i += 1
     end
 
-    puts constraints
-
     solver = SimplexSolver.new
     constraints.each do |cn|
       solver.add_constraint cn
@@ -93,7 +91,6 @@ loop do
   while !input = file.read(100000)
     sleep 0.1
   end
-  puts input
   begin
     SexpSolver.new(variables).parse_and_solve(input)
     puts variables
