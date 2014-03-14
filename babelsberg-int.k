@@ -1,3 +1,6 @@
+require "builtins/builtins.k"
+require "io/uris.k"
+
 module BABELSBERG-INT-CONSTRAINT-SYNTAX
   syntax AtomicConstraint   ::= CExpression "<=" CExpression
                               | CExpression ">=" CExpression
@@ -13,6 +16,7 @@ module BABELSBERG-INT-CONSTRAINT-SYNTAX
                               > CExpression "+" CExpression     [left]
                               > CExpression "-" CExpression     [left]
 endmodule
+
 
 module BABELSBERG-INT-SYNTAX
   imports BABELSBERG-INT-CONSTRAINT-SYNTAX
@@ -33,19 +37,44 @@ module BABELSBERG-INT-SYNTAX
   syntax Value              ::= Bool | Number
 endmodule
 
+
 module BABELSBERG-INT
+  imports URIS
+
   imports BABELSBERG-INT-SYNTAX
 
+  // K-specific
   syntax KResult            ::= Value
 
+  // getModel expresses E ||= C
+  // it gets stuck if no model is available, so we don't need an explicit "unsat" case
+  syntax Map ::= "#getModel" "(" Constraint "," String ")" [function]
+               | "#writeAndPoll" "(" Constraint "," Int ")" [function]
+	       | "#poll" "(" Int "," K ")" [function]
+	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
+	       | "#closeAndConvert" "(" Int "," String ")" [function]
+	       | "#convert" "(" K "," Constraint ")" [function]
+	       | "#convertRest" "(" Map "," Constraint ")" [function]
+  rule #getModel(C, Path) => #writeAndPoll(C, #open(Path))
+  rule #writeAndPoll(C, Fd) => #poll(Fd, #write(Fd, K2String(C)))
+  rule #poll(Fd:Int, _) => #checkResultOfRead(Fd, #read(Fd, 10000)) // try to read all
+  rule #checkResultOfRead(Fd:Int, ReadResult:String) => #closeAndConvert(Fd, ReadResult)
+  rule #checkResultOfRead(Fd:Int, _) => #poll(Fd, #write(Fd, "")) // eof-case
+  rule #closeAndConvert(Fd, ReadResult) => #convert(#close(Fd), #parse(ReadResult, "Constraint"))
+  rule #convert(_, Constraint) => #convertRest(.Map, Constraint)
+  rule #convertRest(M, V = N && C) => #convertRest(M (V |-> N), C)
+  rule #convertRest(M, V = N) => #convertRest(M (V |-> N), .)
+  rule #convertRest(M, .) => M
+  // getStays converts Map into stay constraints
+  syntax Constraint ::= "#getStays" "(" Constraint "," Map ")" [function]
+  rule #getStays(C, (X |-> V) Rest) => #getStays(C && X = V, Rest) [function]
+  rule #getStays(C, .) => C
+
+  // state
   configuration <T>
     <k> $PGM:Statement </k> // the remaining program
     <E> .Map </E> // the environment
-    <C> .List </C> // the constraints
-
-    // in/out, for communication with the solver
-    <in stream="stdin"> .List </in>
-    <out stream="stdout"> .List </out>
+    <C> 1=1 </C> // the actual constraint system
   </T>
 
   rule <k> X:Variable => V ...</k> <E>... X |-> V ...</E>
@@ -61,11 +90,14 @@ module BABELSBERG-INT
   rule (F1:Float - F2:Float):Expression => F1 -Float F2
 
   // S-Asgn
-  rule <k> X := V => . ...</k> <E>... X |-> (_ => V) ...</E>
-  rule <k> X := V => . ...</k> <E> Rho:Map (. => X |-> V) </E> when notBool (X in keys(Rho))
+  rule <k> X := V:Number => . ...</k>
+       <E> E => #getModel(C && (X = V) && #getStays(1 = 1, E), "./z3") </E>
+       <C> C => C </C>
 
   // S-Always
-  rule <k> always C0:Constraint => . ...</k> <C>... (. => ListItem(C0))</C>
+  rule <k> always C0:Constraint => . ...</k>
+       <E> E => #getModel(C && C0 && #getStays(1 = 1, E), "./z3") </E>
+       <C> C => C && C0 </C>
 
   // S-SeqStep
   rule S1 ; S2 => S1 ~> S2 [structural]
