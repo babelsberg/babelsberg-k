@@ -61,7 +61,7 @@ module BABELSBERG-INT
 
   syntax K ::= "checkSat" "(" Map "," Constraint ")"
   // S-Asgn
-  rule <k> X := V:Number => checkSat(#getAssignments(C && X = V && #getStays(E), Fd), C) ...</k>
+  rule <k> X := V:Expression => checkSat(#getAssignments(C && X = V && #getStays(E), Fd), C) ...</k>
        <E> E </E> <C> C </C> <Cassowary> Fd </Cassowary>
 
   // S-Always
