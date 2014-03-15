@@ -84,6 +84,7 @@ end
 FPath = "./cassowary-gateway.exchange"
 file = File.open(FPath, 'r+')
 at_exit do
+  File.read FPath
   File.unlink FPath
 end
 

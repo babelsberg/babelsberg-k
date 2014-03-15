@@ -30,7 +30,10 @@ if [ $semantics -nt $compiledS ]; then
 	echo "Please put kompile in your PATH"
 	exit 1
     fi
-    kompile $semantics || exit 1
+    kompile $semantics
+    if [ $? -ne 0 ]; then
+	exit 1
+    fi
 fi
 
 echo "Running $program"

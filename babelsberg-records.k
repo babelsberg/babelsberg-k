@@ -7,12 +7,16 @@ module BABELSBERG-RECORDS-SYNTAX
 
   syntax RecordExpression ::= Label ":" Expression                  [strict(2)]
                             | RecordExpression "," RecordExpression [left, seqstrict]
-  syntax Expression  ::= "{" RecordExpression "}"		    [strict]
-  	               | Expression "." Label			    [strict(1)]
+  syntax Expression  ::= "{" RecordExpression "}"                   [strict]
+                       | Expression "." Label                       [strict(1)]
 
   syntax RecordValue      ::= Label ":" Value                       [strict(2)]
                             | RecordValue "," RecordValue           [left, seqstrict]
   syntax Value      ::= "{" RecordValue "}"
+
+  syntax RecordType ::= Label ":" Type
+                      | RecordType "," RecordType [left]
+  syntax Type       ::= Number | Bool | "{" RecordType "}"
 endmodule
 
 module BABELSBERG-RECORDS
@@ -24,4 +28,8 @@ module BABELSBERG-RECORDS
   rule ({ L : V, A } . L) => V
   rule ({ B, L : V, A } . L) => V
   rule ({ B, L : V } . L) => V
+
+  // Types? Need to read about them in the K types tutorial
+
+  // Todo: Constraint construction
 endmodule
