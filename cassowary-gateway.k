@@ -1,10 +1,9 @@
 require "builtins/builtins.k"
 require "io/uris.k"
-require "./babelsberg.k"
 
 module CASSOWARY-GATEWAY
   imports URIS
-  imports BABELSBERG-CONSTRAINT-SYNTAX
+  imports BABELSBERG-INT-SYNTAX // XXX: Need to modify this to compile with other versions
 
   // getStays converts Map into stay constraints
   syntax Constraint ::= "#getStays" "(" Map ")" [function]
@@ -28,28 +27,28 @@ module CASSOWARY-GATEWAY
   rule #convertRest(M, .) => M
 
   syntax String ::= "#printConstraints" "(" Constraint ")" [function]
-                  | "#printCExp" "(" CExpression ")" [function]
+                  | "#printCExp" "(" Expression ")" [function]
   rule #printConstraints(.) => ""
   rule #printConstraints(Constraint1 && Constraint2)
        => #printConstraints(Constraint1) +String #printConstraints(Constraint2)
   rule #printConstraints(weak Constraint1)
        => "(weak " +String #printConstraints(Constraint1) +String ")\n"
   // AtomicConstraint
-  rule #printConstraints(CExpression1 = CExpression2)
-       => "(= " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")\n"
-  rule #printConstraints(CExpression1 >= CExpression2)
-       => "(>= " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")\n"
-  rule #printConstraints(CExpression1 <= CExpression2)
-       => "(<= " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")\n"
-  // CExpressions
-  rule #printCExp(CExpression1 / CExpression2)
-       => "(/ " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")"
-  rule #printCExp(CExpression1 * CExpression2)
-       => "(* " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")"
-  rule #printCExp(CExpression1 + CExpression2)
-       => "(+ " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")"
-  rule #printCExp(CExpression1 - CExpression2)
-       => "(- " +String #printCExp(CExpression1) +String " " +String #printCExp(CExpression2) +String ")"
+  rule #printConstraints(Expression1 = Expression2)
+       => "(= " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")\n"
+  rule #printConstraints(Expression1 >= Expression2)
+       => "(>= " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")\n"
+  rule #printConstraints(Expression1 <= Expression2)
+       => "(<= " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")\n"
+  // Expressions
+  rule #printCExp(Expression1 / Expression2)
+       => "(/ " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
+  rule #printCExp(Expression1 * Expression2)
+       => "(* " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
+  rule #printCExp(Expression1 + Expression2)
+       => "(+ " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
+  rule #printCExp(Expression1 - Expression2)
+       => "(- " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
   rule #printCExp(I:Int) => Int2String(I)
   rule #printCExp(F:Float) => Float2String(F)
   rule #printCExp(X:Id) => Id2String(X)

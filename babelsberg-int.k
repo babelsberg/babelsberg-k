@@ -1,8 +1,12 @@
 require "./cassowary-gateway.k"
-require "./babelsberg.k"
 
 module BABELSBERG-INT-SYNTAX
-  imports BABELSBERG-CONSTRAINT-SYNTAX
+  syntax AtomicConstraint   ::= Expression "<=" Expression
+                              | Expression ">=" Expression
+                              | Expression "=" Expression
+
+  syntax Constraint         ::= AtomicConstraint
+                              > Constraint "&&" Constraint      [left]
 
   syntax Statement          ::= "skip"
                               | Variable ":=" Expression        [strict(2)]
@@ -19,7 +23,7 @@ module BABELSBERG-INT-SYNTAX
 
   syntax Number             ::= Int | Float  // a builtin
   syntax Variable           ::= Id           // a builtin
-  syntax Value              ::= Bool | Number
+  syntax Value              ::= Bool | Number | Constraint
 endmodule
 
 
