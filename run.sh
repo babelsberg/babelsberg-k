@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ $# -ne 2 ]; then
+if [ $# -lt 2 ]; then
     echo "./run.sh babelsberg-SEMANTICS.k program"
     exit 1
 fi
@@ -21,7 +21,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ ! -e $compiledS ]; then
+if [ $semantics -nt $compiledS ]; then
+    echo "Need to recompile..."
     rm --one-file-system -rf babelsberg-*-kompiled
     # K doesn't like multiple compiled things around
     which kompile 2>&1 >/dev/null
