@@ -52,20 +52,22 @@ module BABELSBERG-INT
   rule (F1:Float - F2:Float):Expression => F1 -Float F2
 
   // S-Unsat
-  // Hack... this should really be in the S-Asgn and S-Always rules
+  // TODO... this should really be in the S-Asgn and S-Always rules
   rule <k>_ => unsat</k> <E> (-1 |-> -2) => .Map </E>
 
+  syntax K ::= "checkSat" "(" Map "," Constraint ")"
   // S-Asgn
-  rule <k> X := V:Number => . ...</k>
-       <E> E => #getAssignments(C && X = V && #getStays(E), Fd) </E>
-       <C> C => C </C>
-       <Cassowary> Fd </Cassowary>
+  rule <k> X := V:Number => checkSat(#getAssignments(C && X = V && #getStays(E), Fd), C) ...</k>
+       <E> E </E> <C> C </C> <Cassowary> Fd </Cassowary>
 
   // S-Always
-  rule <k> always C0:Constraint => . ...</k>
-       <E> E => #getAssignments(C && C0 && #getStays(E), Fd) </E>
-       <C> C => C && C0 </C>
-       <Cassowary> Fd </Cassowary>
+  rule <k> always C0:Constraint => checkSat(#getAssignments(C && C0 && #getStays(E), Fd), C && C0) ...</k>
+       <E> E </E> <C> C </C> <Cassowary> Fd </Cassowary>
+
+  // S-unsat -- Hack, we're using an invalid mapping (-1 -> -2) as marker for unsat
+  rule <k> checkSat((-1 |-> -2), C) ~> _ => unsat </k>
+  // S-sat
+  rule <k> checkSat(E, C) => . ...</k> <E> _ => E </E> <C> _ => C </C>
 
   // S-SeqStep
   rule S1 ; S2 => S1 ~> S2 [structural]
