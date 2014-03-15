@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+if [ $# -ne 2 ]; then
+    echo "./run.sh babelsberg-SEMANTICS.k program"
+    exit 1
+fi
+
+semantics=$1
+compiledS=${semantics%%.*}-kompiled
+program=$2
+
 which krun 2>&1 >/dev/null
 if [ $? -ne 0 ]; then
     echo "Please put krun in your PATH"
@@ -12,24 +21,22 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ ! -e "babelsberg-int-kompiled" ]; then
-    which kcompile 2>&1 >/dev/null
+if [ ! -e $compiledS ]; then
+    rm --one-file-system -rf babelsberg-*-kompiled
+    # K doesn't like multiple compiled things around
+    which kompile 2>&1 >/dev/null
     if [ $? -ne 0 ]; then
-	echo "Please put kcompile in your PATH"
+	echo "Please put kompile in your PATH"
 	exit 1
     fi
-    kcompile babelsberg-int.k
+    kompile $semantics || exit 1
 fi
 
-if [ "$1" == "" ]; then
-    file="./example.int"
-else
-    file="$1"
-fi
-echo "Running $file"
-cat "$file"
-sleep 3
-krun "$file" &
+echo "Running $program"
+cat "$program"
+krun "$program" &
+krun="$!"
 sleep 2
 ruby ./cassowary-gateway.rb
 sleep 1
+kill -9 $krun
