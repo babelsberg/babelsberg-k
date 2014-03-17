@@ -26,6 +26,9 @@ module BABELSBERG-INT-SYNTAX
   syntax Value              ::= Bool | Number | Constraint
 endmodule
 
+module BABELSBERG-SYNTAX
+  imports BABELSBERG-INT-SYNTAX
+endmodule
 
 module BABELSBERG-INT
   imports BABELSBERG-INT-SYNTAX

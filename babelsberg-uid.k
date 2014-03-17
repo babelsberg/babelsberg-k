@@ -97,6 +97,4 @@ module BABELSBERG-UID
 
   // S-SeqStep
   rule S1 ; S2 => S1 ~> S2 [structural]
-
-
 endmodule

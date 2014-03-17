@@ -1,4 +1,8 @@
-x := 2;
-y := 4;
-b := {a: 2};
-always {b: 2} = {b: 4}
+y := 0;
+x := 1;
+always x = 10;
+always y = 20;
+a := {x: 2};
+b := {x: 2}.x;
+always b >= 20;
+always b = 10

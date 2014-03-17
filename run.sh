@@ -39,8 +39,14 @@ fi
 echo "Running $program"
 cat "$program"
 krun "$program" &
-krun="$!"
+export krun="$!"
+
+function cleanup() {
+    pkill -9 -P $krun
+    kill -9 $krun
+}
+trap cleanup SIGINT
+
 sleep 2
 ruby ./cassowary-gateway.rb
 sleep 1
-kill -9 $krun

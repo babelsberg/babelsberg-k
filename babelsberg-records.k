@@ -19,12 +19,17 @@ module BABELSBERG-RECORDS-SYNTAX
   syntax Type       ::= Number | Bool | "{" RecordType "}"
 endmodule
 
+module BABELSBERG-SYNTAX
+  imports BABELSBERG-RECORDS-SYNTAX
+endmodule
+
 module BABELSBERG-RECORDS
   imports BABELSBERG-INT
   imports BABELSBERG-RECORDS-SYNTAX
 
   // E-Rec expressed in strict annotations in syntax
   // E-Field
+  rule ({ L : V } . L) => V
   rule ({ L : V, A } . L) => V
   rule ({ B, L : V, A } . L) => V
   rule ({ B, L : V } . L) => V
