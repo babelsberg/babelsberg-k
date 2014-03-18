@@ -49,18 +49,22 @@ module BABELSBERG-INT
   rule <k> X:Variable => V ...</k> <E>... X |-> V ...</E>
 
   // E-Op
-  rule (I1:Int / I2:Int):Expression => I1 /Int I2
-  rule (I1:Int * I2:Int):Expression => I1 *Int I2
-  rule (I1:Int + I2:Int):Expression => I1 +Int I2
-  rule (I1:Int - I2:Int):Expression => I1 -Int I2
+  rule (F1:Int / F2:Int):Expression => Int2Float(F1) /Float Int2Float(F2)
+  rule (F1:Int * F2:Int):Expression => Int2Float(F1) *Float Int2Float(F2)
+  rule (F1:Int + F2:Int):Expression => Int2Float(F1) +Float Int2Float(F2)
+  rule (F1:Int - F2:Int):Expression => Int2Float(F1) -Float Int2Float(F2)
   rule (F1:Float / F2:Float):Expression => F1 /Float F2
   rule (F1:Float * F2:Float):Expression => F1 *Float F2
   rule (F1:Float + F2:Float):Expression => F1 +Float F2
   rule (F1:Float - F2:Float):Expression => F1 -Float F2
-
-  // S-Unsat
-  // TODO... this should really be in the S-Asgn and S-Always rules
-  rule <k>_ => unsat</k> <E> (-1 |-> -2) => .Map </E>
+  rule (F1:Float / F2:Int):Expression => F1 /Float Int2Float(F2)
+  rule (F1:Float * F2:Int):Expression => F1 *Float Int2Float(F2)
+  rule (F1:Float + F2:Int):Expression => F1 +Float Int2Float(F2)
+  rule (F1:Float - F2:Int):Expression => F1 -Float Int2Float(F2)
+  rule (F1:Int / F2:Float):Expression => Int2Float(F1) /Float F2
+  rule (F1:Int * F2:Float):Expression => Int2Float(F1) *Float F2
+  rule (F1:Int + F2:Float):Expression => Int2Float(F1) +Float F2
+  rule (F1:Int - F2:Float):Expression => Int2Float(F1) -Float F2
 
   syntax K ::= "checkSat" "(" Map "," Constraint ")"
   // S-Asgn
