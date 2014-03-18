@@ -1,5 +1,5 @@
 y := 0;
-x := 1;
+x := y - 1;
 always x = 10;
 always x >= 20;
 always y = 20
