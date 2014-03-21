@@ -7,7 +7,7 @@ module CASSOWARY-GATEWAY
   imports URIS
   imports BABELSBERG-CONSTRAINT-SYNTAX
 
-  // getModel expresses M ||= C
+  // getModel expresses the call to the solver in M ||= C
   syntax Constraint ::= "#getModel" "(" Constraint "," Int ")" [function]
 	       | "#poll" "(" Int "," K ")" [function]
 	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
@@ -18,6 +18,7 @@ module CASSOWARY-GATEWAY
   rule #checkResultOfRead(Fd:Int, #EOF) => #poll(Fd, .) // eof-case
   rule #closeAndConvert(Fd, ReadResult) => #parse(ReadResult, "Constraint")
 
+  // helper rules to print sexps from the constraints
   syntax String ::= "#printConstraints" "(" Constraint ")" [function]
                   | "#printCExp" "(" Expression ")" [function]
   rule #printConstraints(.) => ""
