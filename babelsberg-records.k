@@ -19,22 +19,16 @@ module BABELSBERG-RECORDS-SYNTAX
   syntax Type       ::= Number | Bool | "{" RecordType "}"
 endmodule
 
-module BABELSBERG-SYNTAX
-  imports BABELSBERG-RECORDS-SYNTAX
-endmodule
-
 module BABELSBERG-RECORDS
   imports BABELSBERG-INT
   imports BABELSBERG-RECORDS-SYNTAX
 
-  // E-Rec expressed in strict annotations in syntax
+  // E-Rec
+  // realized by [strict] annotation above
   // E-Field
-  rule ({ L : V } . L) => V
-  rule ({ L : V, A } . L) => V
-  rule ({ B, L : V, A } . L) => V
-  rule ({ B, L : V } . L) => V
+  rule ({ L : V } . L) => V // E-Field-One
+  rule ({ L : V, A } . L) => V // E-Field-First
+  rule ({ X : V, A } . L) => ({ A } . L) // E-Field-Not-First
 
   // Types? Need to read about them in the K types tutorial
-
-  // Todo: Constraint construction
 endmodule

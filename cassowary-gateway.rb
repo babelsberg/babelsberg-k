@@ -82,7 +82,11 @@ class SexpSolver
 end
 
 FPath = "./cassowary-gateway.exchange"
-file = File.open(FPath, 'r+')
+begin
+  file = File.open(FPath, 'r+')
+rescue Errno::ENOENT
+  retry
+end
 at_exit do
   puts File.read FPath
   File.unlink FPath
