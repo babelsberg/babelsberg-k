@@ -1,5 +1,5 @@
-y := 0;
-x := y - 1;
-always x = 10;
-always x >= 20;
-always y = 20
+y := 0.0;
+x := y - 1.0;
+always x = 10.0;
+always x >= 20.0;
+always y = 20.0

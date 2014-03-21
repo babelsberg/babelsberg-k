@@ -84,7 +84,7 @@ end
 FPath = "./cassowary-gateway.exchange"
 file = File.open(FPath, 'r+')
 at_exit do
-  File.read FPath
+  puts File.read FPath
   File.unlink FPath
 end
 
@@ -99,7 +99,9 @@ loop do
       "#{v.name} = #{v.value}"
     end.join(" && ") << "\n\n"
   rescue Cassowary::RequiredFailure
-    file << "-1 = -2\n\n"
+    file << "1.0 = 2.0\n\n"
+    file.flush
+    sleep 4
     exit
   end
 end

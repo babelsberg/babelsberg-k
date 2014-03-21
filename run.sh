@@ -32,6 +32,7 @@ if [ $semantics -nt $compiledS ]; then
     fi
     kompile $semantics
     if [ $? -ne 0 ]; then
+	rm -rf $compiledS
 	exit 1
     fi
 fi
@@ -50,3 +51,5 @@ trap cleanup SIGINT
 sleep 2
 ruby ./cassowary-gateway.rb
 sleep 1
+
+cleanup

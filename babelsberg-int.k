@@ -1,19 +1,19 @@
 require "./cassowary-gateway.k"
 
 module BABELSBERG-INT-SYNTAX
-  syntax AtomicConstraint   ::= Expression "<=" Expression
-                              | Expression ">=" Expression
-                              | Expression "=" Expression
-
-  syntax Constraint         ::= AtomicConstraint
-                              > Constraint "&&" Constraint      [left]
-
   syntax Statement          ::= "skip"
                               | Variable ":=" Expression        [strict(2)]
                               | "always" Constraint
-                              | "weak" "always" Constraint
                               | Statement ";" Statement         [left]
 			      | "unsat"
+
+  syntax Constraint         ::= "true" | AtomicConstraint | "weak" AtomicConstraint
+                              | Constraint "&&" Constraint [left]
+                              | Constraint "||" Constraint [left] // TODO: fix this in the paper
+
+  syntax AtomicConstraint   ::= Expression "<=" Expression [left]
+                              | Expression ">=" Expression [left]
+                              | Expression "=" Expression [left]
 
   syntax Expression         ::= Number | Variable
                               | Expression "/" Expression       [strict, left]
@@ -21,13 +21,13 @@ module BABELSBERG-INT-SYNTAX
                               > Expression "+" Expression       [strict, left]
                               > Expression "-" Expression       [strict, left]
 
-  syntax Number             ::= Int | Float  // a builtin
-  syntax Variable           ::= Id           // a builtin
-  syntax Value              ::= Bool | Number | Constraint
+  syntax Number             ::= Float
+  syntax Variable           ::= Id
+  syntax Value              ::= Number
 endmodule
 
-module BABELSBERG-SYNTAX
-  imports BABELSBERG-INT-SYNTAX
+module BABELSBERG-CONSTRAINT-SYNTAX
+  imports BABELSBERG-INT-SYNTAX // identical
 endmodule
 
 module BABELSBERG-INT
@@ -45,41 +45,83 @@ module BABELSBERG-INT
     <Cassowary> #open("./cassowary-gateway.exchange"):Int </Cassowary>
   </T>
 
+  // E-Num
+  // realized by [strict] annotation above
   // E-Var
   rule <k> X:Variable => V ...</k> <E>... X |-> V ...</E>
-
   // E-Op
-  rule (F1:Int / F2:Int):Expression => Int2Float(F1) /Float Int2Float(F2)
-  rule (F1:Int * F2:Int):Expression => Int2Float(F1) *Float Int2Float(F2)
-  rule (F1:Int + F2:Int):Expression => Int2Float(F1) +Float Int2Float(F2)
-  rule (F1:Int - F2:Int):Expression => Int2Float(F1) -Float Int2Float(F2)
   rule (F1:Float / F2:Float):Expression => F1 /Float F2
   rule (F1:Float * F2:Float):Expression => F1 *Float F2
   rule (F1:Float + F2:Float):Expression => F1 +Float F2
   rule (F1:Float - F2:Float):Expression => F1 -Float F2
-  rule (F1:Float / F2:Int):Expression => F1 /Float Int2Float(F2)
-  rule (F1:Float * F2:Int):Expression => F1 *Float Int2Float(F2)
-  rule (F1:Float + F2:Int):Expression => F1 +Float Int2Float(F2)
-  rule (F1:Float - F2:Int):Expression => F1 -Float Int2Float(F2)
-  rule (F1:Int / F2:Float):Expression => Int2Float(F1) /Float F2
-  rule (F1:Int * F2:Float):Expression => Int2Float(F1) *Float F2
-  rule (F1:Int + F2:Float):Expression => Int2Float(F1) +Float F2
-  rule (F1:Int - F2:Float):Expression => Int2Float(F1) -Float F2
 
-  syntax K ::= "checkSat" "(" Map "," Constraint ")"
+  syntax K ::= "#mapTo(" K ")" [function]
+  // ToNum
+  rule #mapTo(Number) => Number
+  // ToVar
+  rule #mapTo(Variable) => Variable
+  // ToArith
+  rule #mapTo(E1 / E2) => #mapTo(E1) / #mapTo(E2)
+  rule #mapTo(E1 * E2) => #mapTo(E1) * #mapTo(E2)
+  rule #mapTo(E1 + E2) => #mapTo(E1) + #mapTo(E2)
+  rule #mapTo(E1 - E2) => #mapTo(E1) - #mapTo(E2)
+  // ToCompare
+  rule #mapTo(E1 = E2) => #mapTo(E1) = #mapTo(E2)
+  rule #mapTo(E1 <= E2) => #mapTo(E1) <= #mapTo(E2)
+  rule #mapTo(E1 >= E2) => #mapTo(E1) >= #mapTo(E2)
+  // ToTrue
+  // TODO: rule #mapTo(true:Constraint) => 1.0 = 1.0
+  // ToCombine
+  rule #mapTo(C1 || C2) => #mapTo(C1) || #mapTo(C2)
+  rule #mapTo(C1 && C2) => #mapTo(C1) && #mapTo(C2)
+  // ToWeak
+  rule #mapTo(weak C) => weak #mapTo(C)
+
+  syntax Map ::= "#mapFrom" "(" Map "," Constraint ")" [function]
+  // FromEmpty
+  rule #mapFrom(M, .) => M
+  // FromOne
+  rule #mapFrom(M, V = N && C) => #mapFrom(M (V |-> N), C)
+  rule #mapFrom(M, V = N) => #mapFrom(M (V |-> N), .)
+
+  syntax K ::= "#solve" "(" Constraint ")" [function]
+             | "#solved" "(" Constraint ")" [function]
+	     | "||=" "(" Map ")"
+	     | "/||="
+  // getModel (represent call to the solver)
+  rule <k> #solve(C) => #solved(#getModel(#mapTo(C), Fd)) ...</k> <Cassowary> Fd </Cassowary>
+
+  // Unsat
+  rule #solved(1.0 = 2.0) => /||=
+
+  // Solve
+  rule #solved(Ec) => ||=(#mapFrom(., Ec))
+
+  syntax AtomicConstraint ::= "#stay" "(" Map ")" [function]
+  // StayEmpty
+  rule #stay(.) => .
+  // StayOne
+  rule #stay((X |-> V) E0:Map) => (weak X = V) && #stay(E0)
+
   // S-Asgn
-  rule <k> X := V:Expression => checkSat(#getAssignments(C && X = V && #getStays(E), Fd), C) ...</k>
-       <E> E </E> <C> C </C> <Cassowary> Fd </Cassowary>
+  rule <k> X := V:Expression => #solve(C && X = V && #stay(E)) ~> X := V ...</k> <E> E </E> <C> C </C>
+  rule <k> ||=(Ec) ~> X := V => skip ...</k> <E> _ => Ec </E>
+  // S-AsgnUnsat
+  rule <k> /||= ~> X := V => unsat ...</k>
 
   // S-Always
-  rule <k> always C0:Constraint => checkSat(#getAssignments(C && C0 && #getStays(E), Fd), C && C0) ...</k>
-       <E> E </E> <C> C </C> <Cassowary> Fd </Cassowary>
-
-  // S-unsat -- Hack, we're using an invalid mapping (-1 -> -2) as marker for unsat
-  rule <k> checkSat((-1 |-> -2), C) ~> _ => unsat </k>
-  // S-sat
-  rule <k> checkSat(E, C) => . ...</k> <E> _ => E </E> <C> _ => C </C>
+  rule <k> always C0 => #solve(C && C0 && #stay(E)) ~> always C && C0 ...</k> <E> E </E> <C> C </C>
+  rule <k> ||=(Ec) ~> always C => skip ...</k> <E> _ => Ec </E> <C> _ => C </C>
+  // S-AlwaysUnsat
+  rule <k> /||= ~> always C => unsat ...</k>
 
   // S-SeqStep
   rule S1 ; S2 => S1 ~> S2 [structural]
+
+  // S-SeqSkip
+  rule <k> skip ~> S2 => S2 </k>
+
+  // S-SeqUnsat
+  // TODO: figure out why this doesn't work
+  // rule <k> unsat ~> _  => unsat </k>
 endmodule
