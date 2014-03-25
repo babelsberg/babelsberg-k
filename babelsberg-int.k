@@ -70,7 +70,7 @@ module BABELSBERG-INT
   rule #mapTo(E1 <= E2) => #mapTo(E1) <= #mapTo(E2)
   rule #mapTo(E1 >= E2) => #mapTo(E1) >= #mapTo(E2)
   // ToTrue
-  rule #mapTo(true) => 1.0 = 1.0
+  rule #mapTo(true:Constraint) => 1.0 = 1.0
   // ToCombine
   rule #mapTo(C1 || C2) => #mapTo(C1) || #mapTo(C2)
   rule #mapTo(C1 && C2) => #mapTo(C1) && #mapTo(C2)
