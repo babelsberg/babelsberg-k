@@ -81,8 +81,8 @@ module BABELSBERG-INT
   // FromEmpty
   rule #mapFrom(M, .) => M
   // FromOne
-  rule #mapFrom(M, V = N && C) => #mapFrom(M (V |-> N), C)
-  rule #mapFrom(M, V = N) => #mapFrom(M (V |-> N), .)
+  rule #mapFrom(M, V:Variable = N && C) => #mapFrom(M (V |-> N), C)
+  rule #mapFrom(M, C:AtomicConstraint) => #mapFrom(M, C && .)
 
   syntax K ::= "#solve" "(" Constraint ")" [function]
              | "#solved" "(" Constraint ")" [function]

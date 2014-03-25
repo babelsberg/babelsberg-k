@@ -44,4 +44,7 @@ module CASSOWARY-GATEWAY
        => "(- " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
   rule #printCExp(F:Float) => Float2String(F)
   rule #printCExp(X:Id) => Id2String(X)
+
+  // XXX: found in records
+  // rule #printCExp(X:Id >> L:Id) => Id2String(X) +String ">>" +String Id2String(L)
 endmodule
