@@ -11,8 +11,12 @@ program=$2
 
 which krun 2>&1 >/dev/null
 if [ $? -ne 0 ]; then
-    echo "Please put krun in your PATH"
-    exit 1
+    if [ -x $PWD/../k/bin/krun ]; then
+	export PATH=$PWD/../k/bin:$PATH
+    else
+	echo "Please put krun in your PATH"
+	exit 1
+    fi
 fi
 
 which ruby 2>&1 >/dev/null
