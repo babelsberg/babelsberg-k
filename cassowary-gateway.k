@@ -1,3 +1,4 @@
+require "./operations.k"
 require "builtins/builtins.k"
 require "io/uris.k"
 
@@ -6,21 +7,22 @@ require "io/uris.k"
 module CASSOWARY-GATEWAY
   imports URIS
   imports BABELSBERG-CONSTRAINT-SYNTAX
+  imports OPERATIONS
 
   // getModel expresses the call to the solver in M ||= C
-  syntax Constraint ::= "#getModel" "(" Constraint "," Int ")" [function]
+  syntax ConstraintL ::= "#getModel" "(" ConstraintL "," Int ")" [function]
 	       | "#poll" "(" Int "," K ")" [function]
 	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
 	       | "#closeAndConvert" "(" Int "," String ")" [function]
-  rule #getModel(C, Fd:Int) => #poll(Fd, #write(Fd, #printConstraints(C)))
+  rule #getModel(C:ConstraintL, Fd:Int) => #poll(Fd, #write(Fd, #printConstraints(C:ConstraintL)))
   rule #poll(Fd:Int, _) => #checkResultOfRead(Fd, #read(Fd, 10000)) // try to read all
   rule #checkResultOfRead(Fd:Int, ReadResult:String) => #closeAndConvert(Fd, ReadResult)
   rule #checkResultOfRead(Fd:Int, #EOF) => #poll(Fd, .) // eof-case
-  rule #closeAndConvert(Fd, ReadResult) => #parse(ReadResult, "Constraint")
+  rule #closeAndConvert(Fd, ReadResult) => #parse(ReadResult, "ConstraintL")
 
   // helper rules to print sexps from the constraints
-  syntax String ::= "#printConstraints" "(" Constraint ")" [function]
-                  | "#printCExp" "(" Expression ")" [function]
+  syntax String ::= "#printConstraints" "(" ConstraintL ")" [function]
+                  | "#printCExp" "(" ExpressionL ")" [function]
   rule #printConstraints(.) => ""
   rule #printConstraints(Constraint1 && Constraint2)
        => #printConstraints(Constraint1) +String #printConstraints(Constraint2)
@@ -44,7 +46,4 @@ module CASSOWARY-GATEWAY
        => "(- " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
   rule #printCExp(F:Float) => Float2String(F)
   rule #printCExp(X:Id) => Id2String(X)
-
-  // XXX: found in records
-  // rule #printCExp(X:Id >> L:Id) => Id2String(X) +String ">>" +String Id2String(L)
 endmodule
