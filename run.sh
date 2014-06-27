@@ -5,14 +5,15 @@ if [ $# -lt 2 ]; then
     exit 1
 fi
 
+pdir="$(dirname $0)"
 semantics=$1
 compiledS=${semantics%%.*}-kompiled
 program=$2
 
 which krun 2>&1 >/dev/null
 if [ $? -ne 0 ]; then
-    if [ -x $PWD/../k/bin/krun ]; then
-	export PATH=$PWD/../k/bin:$PATH
+    if [ -x $pdir/../k/bin/krun ]; then
+	export PATH=$pdir/../k/bin:$PATH
     else
 	echo "Please put krun in your PATH"
 	exit 1
