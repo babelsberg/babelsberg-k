@@ -8,7 +8,7 @@ module CASSOWARY-GATEWAY
   imports BABELSBERG-CONSTRAINT-SYNTAX
 
   // getModel expresses the call to the solver in M ||= C
-  syntax Constraint ::= "#getModel" "(" SConstraint "," Int ")" [function]
+  syntax SConstraint ::= "#getModel" "(" SConstraint "," Int ")" [function]
 	       | "#poll" "(" Int "," K ")" [function]
 	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
 	       | "#closeAndConvert" "(" Int "," String ")" [function]
