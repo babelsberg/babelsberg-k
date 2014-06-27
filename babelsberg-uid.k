@@ -42,7 +42,7 @@ module BABELSBERG-UID-SYNTAX
 
   syntax Expression         ::= Reference
 			      | Expression "." Label            [strict, left]
-			      | Record // only in K?
+			      | Object // only in K?
 
   syntax Label              ::= Id
 
@@ -166,7 +166,7 @@ module BABELSBERG-UID
   rule <k> /||= ~> X.L := V => unsat ...</k>
 
   // S-AsgnNew
-  rule <k> X := new { R } => #solve(C && X = size(keys(H)) && #stay(E) && #stay(H)) ~> X := new { R } ...</k>
+  rule <k> X := new { R } => #solve(C && X = size(keys(H:Map)) && #stay(E) && #stay(H:Map)) ~> X := new { R } ...</k>
        <E> E </E> <H> H </H> <C> C </C>
   rule <k> ||=(Ec) ~> X := new { R } => skip ...</k> <E> _ => Ec </E> <H> H => (H (size(H) |-> { R })) </H>
   // S-AsgnNewUnsat

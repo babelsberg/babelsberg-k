@@ -5,9 +5,9 @@ module BABELSBERG-INT-SYNTAX
                               | Variable ":=" Expression        [strict(2)]
                               | "always" Constraint
                               | Statement ";" Statement         [left]
-			      | "unsat"
+			      | "unsat" | "unknown"
 
-  syntax Constraint         ::= "true" | AtomicConstraint | "weak" AtomicConstraint
+  syntax Constraint         ::= "True" | AtomicConstraint | "weak" AtomicConstraint
                               | Constraint "&&" Constraint [left]
                               | Constraint "||" Constraint [left] // TODO: fix this in the paper
 
@@ -23,7 +23,7 @@ module BABELSBERG-INT-SYNTAX
 
   syntax Number             ::= Float
   syntax Variable           ::= Id
-  syntax Value              ::= Number
+  syntax Value              ::= Number | "fin"
 endmodule
 
 module BABELSBERG-CONSTRAINT-SYNTAX
@@ -70,7 +70,7 @@ module BABELSBERG-INT
   rule #mapTo(E1 <= E2) => #mapTo(E1) <= #mapTo(E2)
   rule #mapTo(E1 >= E2) => #mapTo(E1) >= #mapTo(E2)
   // ToTrue
-  rule #mapTo(true:Constraint) => 1.0 = 1.0
+  rule #mapTo(True:Constraint) => 1.0 = 1.0
   // ToCombine
   rule #mapTo(C1 || C2) => #mapTo(C1) || #mapTo(C2)
   rule #mapTo(C1 && C2) => #mapTo(C1) && #mapTo(C2)
@@ -88,11 +88,14 @@ module BABELSBERG-INT
              | "#solved" "(" Constraint ")" [function]
 	     | "||=" "(" Map ")"
 	     | "/||="
+	     | "?||="
   // getModel (represent call to the solver)
   rule <k> #solve(C) => #solved(#getModel(#mapTo(C), Fd)) ...</k> <Cassowary> Fd </Cassowary>
 
   // Unsat
   rule #solved(1.0 = 2.0) => /||=
+  // Unknown
+  rule #solved(0.0 = 1.0) => ?||=
 
   // Solve
   rule #solved(Ec) => ||=(#mapFrom(., Ec))
@@ -108,20 +111,24 @@ module BABELSBERG-INT
   rule <k> ||=(Ec) ~> X := V => skip ...</k> <E> _ => Ec </E>
   // S-AsgnUnsat
   rule <k> /||= ~> X := V => unsat ...</k>
+  // S-AsgnUnknown
+  rule <k> ?||= ~> X := V => unknown ...</k>
 
   // S-Always
   rule <k> always C0 => #solve(C && C0 && #stay(E)) ~> always C && C0 ...</k> <E> E </E> <C> C </C>
   rule <k> ||=(Ec) ~> always C => skip ...</k> <E> _ => Ec </E> <C> _ => C </C>
   // S-AlwaysUnsat
   rule <k> /||= ~> always C => unsat ...</k>
+  // S-AlwaysUnknown
+  rule <k> ?||= ~> always C => unknown ...</k>
 
   // S-SeqStep
   rule S1 ; S2 => S1 ~> S2 [structural]
-
+  rule .K => fin
   // S-SeqSkip
-  rule <k> skip ~> S2 => S2 </k>
-
+  rule skip ~> S2 => S2 [structural]
   // S-SeqUnsat
-  // TODO: figure out why this doesn't work
-  // rule <k> unsat ~> _  => unsat </k>
+  // rule unsat ~> _  => unsat [structural]
+  // S-SeqUnknown
+  // rule unknown ~> _  => unsat [structural]
 endmodule

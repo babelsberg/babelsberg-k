@@ -88,7 +88,7 @@ rescue Errno::ENOENT
   retry
 end
 at_exit do
-  puts File.read FPath
+  # puts File.read FPath
   File.unlink FPath
 end
 
@@ -98,10 +98,12 @@ loop do
   end
   begin
     SexpSolver.new(variables).parse_and_solve(input)
-    puts variables
+    # puts variables
     file << variables.values.map do |v|
       "#{v.name} = #{v.value}"
     end.join(" && ") << "\n\n"
+  rescue Cassowary::TooDifficult, Cassowary::NonLinearResult
+    file << "0.0 = 1.0\n\n"
   rescue Cassowary::RequiredFailure
     file << "1.0 = 2.0\n\n"
     file.flush

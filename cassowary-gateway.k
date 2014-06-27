@@ -8,7 +8,7 @@ module CASSOWARY-GATEWAY
   imports BABELSBERG-CONSTRAINT-SYNTAX
 
   // getModel expresses the call to the solver in M ||= C
-  syntax Constraint ::= "#getModel" "(" Constraint "," Int ")" [function]
+  syntax Constraint ::= "#getModel" "(" SConstraint "," Int ")" [function]
 	       | "#poll" "(" Int "," K ")" [function]
 	       | "#checkResultOfRead" "(" Int "," TCPAnswer ")" [function]
 	       | "#closeAndConvert" "(" Int "," String ")" [function]
@@ -16,35 +16,32 @@ module CASSOWARY-GATEWAY
   rule #poll(Fd:Int, _) => #checkResultOfRead(Fd, #read(Fd, 10000)) // try to read all
   rule #checkResultOfRead(Fd:Int, ReadResult:String) => #closeAndConvert(Fd, ReadResult)
   rule #checkResultOfRead(Fd:Int, #EOF) => #poll(Fd, .) // eof-case
-  rule #closeAndConvert(Fd, ReadResult) => #parse(ReadResult, "Constraint")
+  rule #closeAndConvert(Fd, ReadResult) => #parse(ReadResult, "SConstraint")
 
   // helper rules to print sexps from the constraints
-  syntax String ::= "#printConstraints" "(" Constraint ")" [function]
-                  | "#printCExp" "(" Expression ")" [function]
+  syntax String ::= "#printConstraints" "(" SConstraint ")" [function]
+                  | "#printCExp" "(" SExpression ")" [function]
   rule #printConstraints(.) => ""
-  rule #printConstraints(Constraint1 && Constraint2)
-       => #printConstraints(Constraint1) +String #printConstraints(Constraint2)
-  rule #printConstraints(weak Constraint1)
-       => "(weak " +String #printConstraints(Constraint1) +String ")\n"
+  rule #printConstraints(SConstraint1 [[&&]] SConstraint2)
+       => #printConstraints(SConstraint1) +String #printConstraints(SConstraint2)
+  rule #printConstraints([[weak]] SConstraint1)
+       => "(weak " +String #printConstraints(SConstraint1) +String ")\n"
   // AtomicConstraint
-  rule #printConstraints(Expression1 = Expression2)
-       => "(= " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")\n"
-  rule #printConstraints(Expression1 >= Expression2)
-       => "(>= " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")\n"
-  rule #printConstraints(Expression1 <= Expression2)
-       => "(<= " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")\n"
+  rule #printConstraints(SExpression1 [[=]] SExpression2)
+       => "(= " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")\n"
+  rule #printConstraints(SExpression1 [[>=]] SExpression2)
+       => "(>= " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")\n"
+  rule #printConstraints(SExpression1 [[<=]] SExpression2)
+       => "(<= " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")\n"
   // Expressions
-  rule #printCExp(Expression1 / Expression2)
-       => "(/ " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
-  rule #printCExp(Expression1 * Expression2)
-       => "(* " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
-  rule #printCExp(Expression1 + Expression2)
-       => "(+ " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
-  rule #printCExp(Expression1 - Expression2)
-       => "(- " +String #printCExp(Expression1) +String " " +String #printCExp(Expression2) +String ")"
-  rule #printCExp(F:Float) => Float2String(F)
-  rule #printCExp(X:Id) => Id2String(X)
-
-  // XXX: found in records
-  // rule #printCExp(X:Id >> L:Id) => Id2String(X) +String ">>" +String Id2String(L)
+  rule #printCExp(SExpression1 [[/]] SExpression2)
+       => "(/ " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")"
+  rule #printCExp(SExpression1 [[*]] SExpression2)
+       => "(* " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")"
+  rule #printCExp(SExpression1 [[+]] SExpression2)
+       => "(+ " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")"
+  rule #printCExp(SExpression1 [[-]] SExpression2)
+       => "(- " +String #printCExp(SExpression1) +String " " +String #printCExp(SExpression2) +String ")"
+  rule #printCExp([[ F:Float ]]) => Float2String(F)
+  rule #printCExp([[ X:Id ]]) => Id2String(X)
 endmodule
