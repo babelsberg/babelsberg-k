@@ -58,9 +58,10 @@ class SexpSolver
                "+" => :+, "-" => :-, "*" => :*, "/" => :/,
                "weak" => :weak}
   def evaluate_sexpr(l)
-    op = OpMapping[l[0]]
+    op = OpMapping["[[" + l[0] + "]]"]
     args = l[1..-1].map do |i|
       if i.is_a? String
+        i = i.sub("[[", "").sub("]]", "")
         begin
           Float(i)
         rescue ArgumentError
@@ -88,7 +89,7 @@ rescue Errno::ENOENT
   retry
 end
 at_exit do
-  # puts File.read FPath
+  puts File.read FPath
   File.unlink FPath
 end
 
@@ -97,15 +98,14 @@ loop do
     sleep 0.1
   end
   begin
+    puts input
     SexpSolver.new(variables).parse_and_solve(input)
-    # puts variables
+    puts variables
     file << variables.values.map do |v|
-      "#{v.name} = #{v.value}"
-    end.join(" && ") << "\n\n"
-  rescue Cassowary::TooDifficult, Cassowary::NonLinearResult
-    file << "0.0 = 1.0\n\n"
-  rescue Cassowary::RequiredFailure
-    file << "1.0 = 2.0\n\n"
+      "[[#{v.name}]] [[=]] [[#{v.value}]]"
+    end.join(" [[&&]] ") << "\n\n"
+  rescue Exception
+    file << "[[1.0]] [[=]] [[2.0]]\n\n"
     file.flush
     sleep 4
     exit
